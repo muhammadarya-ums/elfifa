@@ -3,25 +3,35 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Elfifa - Umroh Praktis Full Service',
+  description: 'Penyedia layanan perjalanan Umroh praktis full service yang terpercaya, memastikan kenyamanan dan kekhusyukan ibadah Anda di Tanah Suci.',
   generator: 'v0.app',
   icons: {
-    icon: [
+    icon: '/logo1.png',
+    apple: '/logo1.png',
+  },
+  // Konfigurasi agar saat di-share ke WhatsApp/Sosmed logonya ikut ganti
+  openGraph: {
+    title: 'Elfifa - Umroh Praktis Full Service',
+    description: 'Penyedia layanan perjalanan Umroh praktis full service yang terpercaya, memastikan kenyamanan dan kekhusyukan ibadah Anda di Tanah Suci.',
+    url: 'https://elfifa.vercel.app',
+    siteName: 'Elfifa Travel Umroh',
+    images: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
+        url: 'https://elfifa.vercel.app/logo1.png',
+        width: 1200,
+        height: 630,
+        alt: 'Elfifa App Logo',
       },
     ],
-    apple: '/apple-icon.png',
+    locale: 'id_ID',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Elfifa - Umroh Praktis Full Service',
+    description: 'Penyedia layanan perjalanan Umroh praktis full service yang terpercaya, memastikan kenyamanan dan kekhusyukan ibadah Anda di Tanah Suci.',
+    images: ['https://elfifa.vercel.app/logo1.png'],
   },
 }
 
@@ -39,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="id">
       <body className="antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

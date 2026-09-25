@@ -117,22 +117,19 @@ const articles: [string, string, string, string, string][] = [
 
 /* ==================== CUSTOM ICONS ==================== */
 
+// Komponen Logo yang sudah diupdate menggunakan image logo.png
 function Logo() {
   return (
     <a
       href="#beranda"
-      className="flex flex-shrink-0 items-center gap-2"
+      className="flex flex-shrink-0 items-center"
       aria-label="Elfifa home"
     >
-      <MosqueIcon className="size-8 text-[#007a82] sm:size-10" />
-      <div className="flex flex-col justify-center">
-        <span className="block text-xl font-bold leading-none tracking-tight text-[#007a82] sm:text-2xl">
-          elfifa
-        </span>
-        <span className="mt-0.5 block text-[8px] font-semibold uppercase tracking-wider text-slate-500 sm:text-[10px]">
-          Umroh Praktis Full Service
-        </span>
-      </div>
+      <img
+        src="/logo.png"
+        alt="Elfifa Umroh Praktis Full Service"
+        className="h-10 w-auto object-contain sm:h-12 lg:h-14"
+      />
     </a>
   );
 }
@@ -723,9 +720,13 @@ export default function ElfifaLanding() {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-12 md:grid-cols-[1.3fr_.7fr_1fr]">
             <div>
-              <div className="mb-4 flex items-center gap-3">
-                <MosqueIcon className="size-8 text-[#007a82]" />
-                <span className="text-2xl font-bold tracking-tight text-white">elfifa</span>
+              <div className="mb-5 inline-flex items-center rounded-xl bg-white p-2">
+                {/* Logo juga diperbarui di bagian footer dengan sedikit background putih agar jelas di tema gelap */}
+                <img 
+                  src="/logo.png" 
+                  alt="Elfifa Logo" 
+                  className="h-8 w-auto object-contain sm:h-10" 
+                />
               </div>
               <p className="mb-6 max-w-xs text-sm leading-relaxed text-slate-400">
                 Penyedia layanan perjalanan Umroh praktis full service yang terpercaya, memastikan kenyamanan dan kekhusyukan ibadah Anda di Tanah Suci.
