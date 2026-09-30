@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     icon: '/logo1.png',
     apple: '/logo1.png',
   },
-  // Konfigurasi agar saat di-share ke WhatsApp/Sosmed logonya ikut ganti
+  
   openGraph: {
     title: 'Elfifa - Umroh Praktis Full Service',
     description: 'Penyedia layanan perjalanan Umroh praktis full service yang terpercaya, memastikan kenyamanan dan kekhusyukan ibadah Anda di Tanah Suci.',
