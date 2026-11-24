@@ -1,46 +1,50 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
+import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
+import { MAIN_URL, travel } from '@/lib/site-config'
 import './globals.css'
 
+const sans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-jakarta',
+  display: 'swap',
+})
+
+const serif = Fraunces({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  variable: '--font-fraunces',
+  display: 'swap',
+})
+
+const title = `Elfifa - ${travel.tagline}`
+
 export const metadata: Metadata = {
-  title: 'Elfifa - Umroh Praktis Full Service',
-  description: 'Penyedia layanan perjalanan Umroh praktis full service yang terpercaya, memastikan kenyamanan dan kekhusyukan ibadah Anda di Tanah Suci.',
-  generator: 'v0.app',
-  icons: {
-    icon: '/logo1.png',
-    apple: '/logo1.png',
-  },
-  
+  metadataBase: new URL(MAIN_URL),
+  title,
+  description: travel.description,
+  keywords: ['umroh', 'paket umroh', 'umroh 17 hari', 'travel umroh surabaya', 'elfifa'],
+  alternates: { canonical: '/' },
   openGraph: {
-    title: 'Elfifa - Umroh Praktis Full Service',
-    description: 'Penyedia layanan perjalanan Umroh praktis full service yang terpercaya, memastikan kenyamanan dan kekhusyukan ibadah Anda di Tanah Suci.',
-    url: 'https://elfifa.vercel.app',
-    siteName: 'Elfifa Travel Umroh',
-    images: [
-      {
-        url: 'https://elfifa.vercel.app/logo1.png',
-        width: 1200,
-        height: 630,
-        alt: 'Elfifa App Logo',
-      },
-    ],
+    title,
+    description: travel.description,
+    url: MAIN_URL,
+    siteName: travel.name,
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Logo Elfifa Travel Umroh' }],
     locale: 'id_ID',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Elfifa - Umroh Praktis Full Service',
-    description: 'Penyedia layanan perjalanan Umroh praktis full service yang terpercaya, memastikan kenyamanan dan kekhusyukan ibadah Anda di Tanah Suci.',
-    images: ['https://elfifa.vercel.app/logo1.png'],
+    title,
+    description: travel.description,
+    images: ['/og-image.jpg'],
   },
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
-  ],
+  colorScheme: 'light',
+  themeColor: '#007a82',
 }
 
 export default function RootLayout({
@@ -49,8 +53,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="id">
-      <body className="antialiased">
+    <html lang="id" className={`${sans.variable} ${serif.variable}`}>
+      <body className="font-sans antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
