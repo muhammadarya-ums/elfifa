@@ -101,6 +101,14 @@ export default async function PackagePage({ params }: Params) {
         </Container>
       </section>
 
+      {pkg.imageUrl && (
+        <Container className="-mt-6 pb-4 sm:-mt-10">
+          <div className="aspect-[21/9] overflow-hidden rounded-[2rem] bg-sand-100">
+            <img src={pkg.imageUrl} alt={pkg.name} className="size-full object-cover" />
+          </div>
+        </Container>
+      )}
+
       <section className="bg-white py-16 sm:py-20">
         <Container className="grid gap-6 lg:grid-cols-2">
           {[

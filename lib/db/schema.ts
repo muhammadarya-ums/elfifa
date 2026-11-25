@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { blob, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 const timestamps = {
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
@@ -31,6 +31,12 @@ export const admins = sqliteTable('admins', {
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   /** Naik setiap logout → semua sesi lama otomatis tidak berlaku */
   sessionVersion: integer('session_version').notNull().default(0),
+  /** Rahasia TOTP (2FA), terenkripsi AES-256-GCM. Null = 2FA belum aktif */
+  totpSecret: text('totp_secret'),
+  /** Time-step terakhir yang dipakai → mencegah kode yang sama dipakai dua kali */
+  totpLastStep: integer('totp_last_step').notNull().default(0),
+  /** Hash SHA-256 kode cadangan (JSON array), sekali pakai */
+  recoveryCodes: text('recovery_codes').notNull().default('[]'),
   lastLoginAt: integer('last_login_at', { mode: 'timestamp_ms' }),
   ...timestamps,
 })
@@ -63,6 +69,8 @@ export const packages = sqliteTable(
     /** Daftar item dipisah baris baru */
     includes: text('includes').notNull().default(''),
     bonuses: text('bonuses').notNull().default(''),
+    /** URL foto paket dari pustaka media (/media/<id>) */
+    imageUrl: text('image_url').notNull().default(''),
     isFeatured: integer('is_featured', { mode: 'boolean' }).notNull().default(false),
     isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
     sortOrder: integer('sort_order').notNull().default(0),
@@ -184,6 +192,52 @@ export const faqs = sqliteTable('faqs', {
   ...timestamps,
 })
 
+/* ============================ MEDIA & KONTEN HALAMAN ============================ */
+
+/**
+ * Gambar yang di-upload admin. Disimpan di database (sudah dikompresi ke WebP
+ * di server) agar tidak bergantung pada layanan penyimpanan file terpisah.
+ */
+export const media = sqliteTable(
+  'media',
+  {
+    id: text('id').primaryKey(),
+    fileName: text('file_name').notNull(),
+    mime: text('mime').notNull(),
+    width: integer('width').notNull(),
+    height: integer('height').notNull(),
+    bytes: integer('bytes').notNull(),
+    data: blob('data', { mode: 'buffer' }).notNull(),
+    alt: text('alt').notNull().default(''),
+    uploadedBy: text('uploaded_by').notNull().default(''),
+    createdAt: timestamps.createdAt,
+  },
+  (t) => [index('media_created_idx').on(t.createdAt)],
+)
+
+/** Konten halaman yang dapat diedit (JSON per blok, divalidasi Zod di server). */
+export const contentBlocks = sqliteTable('content_blocks', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedBy: text('updated_by').notNull().default(''),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+/** Riwayat versi konten — setiap simpan menyimpan versi sebelumnya untuk dipulihkan. */
+export const contentRevisions = sqliteTable(
+  'content_revisions',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    key: text('key').notNull(),
+    value: text('value').notNull(),
+    actor: text('actor').notNull().default(''),
+    createdAt: timestamps.createdAt,
+  },
+  (t) => [index('content_rev_key_idx').on(t.key, t.createdAt)],
+)
+
 /* ============================ KEAMANAN ============================ */
 
 export const auditLogs = sqliteTable(
@@ -219,3 +273,5 @@ export type Admin = typeof admins.$inferSelect
 export type Testimonial = typeof testimonials.$inferSelect
 export type Faq = typeof faqs.$inferSelect
 export type AuditLog = typeof auditLogs.$inferSelect
+export type Media = typeof media.$inferSelect
+export type ContentRevision = typeof contentRevisions.$inferSelect

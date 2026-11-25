@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { buttonVariants, Container, SectionHeading, Stars } from '@/components/site/primitives'
 import type { PackageWithSeats } from '@/lib/data'
 import { formatDate, formatJuta, splitLines } from '@/lib/format'
+import type { Content } from '@/lib/content'
 import { cn } from '@/lib/utils'
 
 function SeatMeter({ pkg, tone = 'light' }: { pkg: PackageWithSeats; tone?: 'light' | 'dark' }) {
@@ -37,6 +38,11 @@ function Featured({ pkg }: { pkg: PackageWithSeats }) {
         </g>
       </svg>
       <div className="relative p-7 sm:p-10 lg:p-12">
+        {pkg.imageUrl && (
+          <div className="mb-8 aspect-[16/7] overflow-hidden rounded-2xl">
+            <img src={pkg.imageUrl} alt={pkg.name} loading="lazy" className="size-full object-cover" />
+          </div>
+        )}
         <span className="inline-flex items-center rounded-full border border-gold-300/40 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-gold-300">
           Paket unggulan
         </span>
@@ -110,6 +116,11 @@ function PackageCard({ pkg }: { pkg: PackageWithSeats }) {
       href={`/paket/${pkg.slug}`}
       className="group flex flex-col rounded-[1.75rem] border border-sand-200 bg-white p-7 transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-1 hover:border-sand-300 hover:shadow-[0_24px_48px_-32px_rgba(16,40,43,0.45)]"
     >
+      {pkg.imageUrl && (
+        <div className="-mx-3 -mt-3 mb-6 aspect-[16/10] overflow-hidden rounded-[1.25rem] bg-sand-100">
+          <img src={pkg.imageUrl} alt={pkg.name} loading="lazy" className="size-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+        </div>
+      )}
       <div className="flex items-start justify-between gap-4">
         <p className="font-display text-5xl leading-none text-brand-700">
           {pkg.durationDays}
@@ -171,19 +182,19 @@ function CustomCard({ waUrl, span, mdFull }: { waUrl: string; span: 1 | 2 | 3; m
   )
 }
 
-export default function Packages({ packages, waUrl }: { packages: PackageWithSeats[]; waUrl: string }) {
+export default function Packages({ c, packages, waUrl }: { c: Content; packages: PackageWithSeats[]; waUrl: string }) {
   const [featured, ...others] = packages
   return (
     <section id="paket" className="scroll-mt-20 bg-white py-20 sm:py-28">
       <Container>
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <SectionHeading
-            eyebrow="Program umroh"
-            title="Pilih waktu terbaik untuk beribadah."
-            description="Harga sudah termasuk tiket pesawat pulang-pergi, visa, hotel, makan, transportasi, dan mutawwif. Rincian lengkap tercantum di setiap paket."
+            eyebrow={c.s('eyebrow')}
+            title={c.s('title')}
+            description={c.s('description')}
           />
           <p className="max-w-xs text-[13px] leading-6 text-ink-muted">
-            Harga dan jadwal dapat menyesuaikan regulasi penerbangan serta kurs. Rincian final dikonfirmasi saat pendaftaran.
+            {c.s('note')}
           </p>
         </div>
 

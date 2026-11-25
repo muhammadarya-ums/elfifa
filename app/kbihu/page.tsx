@@ -16,6 +16,7 @@ import {
 import KbihuMobileNav from '@/components/kbihu-mobile-nav'
 import RegistrationForm from '@/components/registration-form'
 import { FacebookIcon, InstagramIcon, WhatsAppIcon } from '@/components/social-icons'
+import { getBlocks } from '@/lib/content'
 import { getPublishedFaqs, getSettings, getUpcomingSchedules } from '@/lib/data'
 import { formatDate, waLink } from '@/lib/format'
 import { MAIN_URL } from '@/lib/site-config'
@@ -33,32 +34,19 @@ const navItems = [
   { label: 'Cek Status', href: '/cek-status' },
 ]
 
-const curriculum = [
-  {
-    number: '01',
-    icon: BookOpen,
-    title: 'Pemahaman Fiqih',
-    description: 'Memahami rukun, wajib, sunnah, dan adab ibadah dengan landasan ilmu yang kuat.',
-  },
-  {
-    number: '02',
-    icon: Users,
-    title: 'Praktik Manasik',
-    description: 'Menyempurnakan kesiapan melalui simulasi tawaf, sa’i, wukuf, dan rangkaian ibadah lainnya.',
-  },
-  {
-    number: '03',
-    icon: HeartHandshake,
-    title: 'Pendampingan Penuh',
-    description: 'Ustaz dan tim mendampingi jamaah dengan sepenuh perhatian selama di Haramain.',
-  },
-]
+const CURRICULUM_ICONS = [BookOpen, Users, HeartHandshake]
+const AVATAR_TONES = ['bg-[#dbe9df]', 'bg-[#eee5d5]', 'bg-[#dce9ea]']
+const HONORIFICS = new Set(['ust', 'ustadz', 'ustaz', 'ustazah', 'ustadzah', 'h', 'hj', 'kh', 'dr', 'drs', 'prof'])
 
-const asatidz = [
-  { initials: 'HA', name: 'Ust. H. Abdullah, Lc., M.A.', role: 'Pembimbing Utama', color: 'bg-[#dbe9df]' },
-  { initials: 'UF', name: 'Ustazah Fathimah, Lc.', role: 'Pembimbing Manasik', color: 'bg-[#eee5d5]' },
-  { initials: 'UR', name: 'Ust. H. Rasyid, M.A.', role: 'Pembimbing Fiqih', color: 'bg-[#dce9ea]' },
-]
+/** Inisial nama tanpa gelar: "Ust. H. Abdullah, Lc." → "A" + kata berikutnya */
+function initials(name: string) {
+  const words = name
+    .split(',')[0]
+    .split(/\s+/)
+    .map((w) => w.replace(/\./g, ''))
+    .filter((w) => w && !HONORIFICS.has(w.toLowerCase()))
+  return (words.slice(0, 2).map((w) => w[0]).join('') || name[0] || '?').toUpperCase()
+}
 
 function SectionHeading({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
   return (
@@ -70,7 +58,16 @@ function SectionHeading({ eyebrow, children }: { eyebrow: string; children: Reac
 }
 
 export default async function KbihuPage() {
-  const [settings, upcoming, faqs] = await Promise.all([getSettings(), getUpcomingSchedules(6), getPublishedFaqs(['kbihu', 'umum'])])
+  const [settings, upcoming, faqs, blocks] = await Promise.all([
+    getSettings(),
+    getUpcomingSchedules(6),
+    getPublishedFaqs(['kbihu', 'umum']),
+    getBlocks('kbihu.hero', 'kbihu.curriculum', 'kbihu.asatidz', 'kbihu.register'),
+  ])
+  const hero = blocks['kbihu.hero']
+  const cur = blocks['kbihu.curriculum']
+  const team = blocks['kbihu.asatidz']
+  const reg = blocks['kbihu.register']
   const year = new Date().getFullYear()
   const KBIHU_WA_URL = waLink(
     settings.kbihu_whatsapp,
@@ -138,13 +135,13 @@ export default async function KbihuPage() {
             <div className="relative z-10 max-w-[570px]">
               <div className="mb-7 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.22em] text-[#007a82]">
                 <span className="h-px w-9 bg-[#8aaea8]" />
-                Lembaga Bimbingan Resmi
+                {hero.s('eyebrow')}
               </div>
               <h1 className="max-w-[580px] font-serif text-[42px] leading-[1.08] tracking-[-0.045em] text-[#163e40] sm:text-[58px] lg:text-[62px]">
-                Membimbing dengan Ilmu, <em className="font-normal text-[#007a82]">Mengantarkan</em> Menuju Mabrur.
+                {hero.s('titleLead')} <em className="font-normal text-[#007a82]">{hero.s('titleAccent')}</em> {hero.s('titleTail')}
               </h1>
               <p className="mt-7 max-w-[490px] text-[16px] leading-8 text-[#567174]">
-                Lembaga bimbingan ibadah Haji dan Umrah resmi dengan kurikulum sesuai sunnah dan pendampingan intensif dari tanah air hingga ke Tanah Suci.
+                {hero.s('lead')}
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <a
@@ -176,8 +173,8 @@ export default async function KbihuPage() {
               <div className="absolute inset-0 rounded-[32px] bg-[#9fc9c0] opacity-35 blur-3xl" />
               <div className="relative h-full min-h-[340px] overflow-hidden rounded-[28px] border-[10px] border-white/70 shadow-[0_24px_70px_rgba(37,86,80,0.14)] lg:min-h-[480px]">
                 <img
-                  src="/images/manasik-hero.webp"
-                  alt="Jamaah mengikuti pembelajaran manasik"
+                  src={hero.s('image')}
+                  alt={hero.s('imageAlt')}
                   width={1200}
                   height={670}
                   fetchPriority="high"
@@ -185,8 +182,8 @@ export default async function KbihuPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#173f40]/55 via-transparent to-white/10" />
                 <div className="absolute bottom-5 left-5 right-5 text-white">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/80">Belajar sebelum berangkat</p>
-                  <p className="mt-1 font-serif text-xl">Perjalanan yang dimulai dengan ilmu.</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/80">{hero.s('captionEyebrow')}</p>
+                  <p className="mt-1 font-serif text-xl">{hero.s('caption')}</p>
                 </div>
               </div>
             </div>
@@ -196,24 +193,22 @@ export default async function KbihuPage() {
         {/* ==================== KURIKULUM ==================== */}
         <section id="kurikulum" className="mx-auto max-w-7xl px-5 py-24 sm:px-8 lg:px-10">
           <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
-            <SectionHeading eyebrow="Kurikulum kami">Tahapan Bimbingan KBIHU</SectionHeading>
-            <p className="max-w-[340px] text-sm leading-7 text-[#668084]">
-              Kami menyiapkan jamaah dengan ilmu yang benar, praktik yang terarah, dan pendampingan yang menenangkan.
-            </p>
+            <SectionHeading eyebrow={cur.s('eyebrow')}>{cur.s('title')}</SectionHeading>
+            <p className="max-w-[340px] text-sm leading-7 text-[#668084]">{cur.s('description')}</p>
           </div>
           <div className="mt-12 grid gap-4 md:grid-cols-3">
-            {curriculum.map((item) => {
-              const Icon = item.icon
+            {cur.list('items').map((item, i) => {
+              const Icon = CURRICULUM_ICONS[i % CURRICULUM_ICONS.length]
               return (
                 <article
-                  key={item.number}
+                  key={i}
                   className="group rounded-2xl border border-[#dce9e5] bg-white p-7 transition-all hover:-translate-y-1 hover:border-[#9bc6be] hover:shadow-[0_14px_34px_rgba(42,94,87,0.08)]"
                 >
                   <div className="flex items-start justify-between">
                     <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#e8f3f0] text-[#007a82]">
                       <Icon size={23} strokeWidth={1.6} />
                     </span>
-                    <span className="font-serif text-3xl text-[#bdd3ce]">{item.number}</span>
+                    <span className="font-serif text-3xl text-[#bdd3ce]">{String(i + 1).padStart(2, '0')}</span>
                   </div>
                   <h3 className="mt-8 font-serif text-[24px] text-[#1c4849]">{item.title}</h3>
                   <p className="mt-3 text-[14px] leading-7 text-[#6a8182]">{item.description}</p>
@@ -230,10 +225,7 @@ export default async function KbihuPage() {
         <section id="asatidz" className="border-y border-[#e1ebe8] bg-[#f2f7f5]">
           <div className="mx-auto max-w-7xl px-5 py-24 sm:px-8 lg:px-10">
             <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
-              <SectionHeading eyebrow="Para pembimbing">
-                Dibimbing oleh Asatidz
-                <br className="hidden sm:block" /> Berpengalaman
-              </SectionHeading>
+              <SectionHeading eyebrow={team.s('eyebrow')}>{team.s('title')}</SectionHeading>
               <a
                 href={KBIHU_WA_URL}
                 target="_blank"
@@ -244,20 +236,31 @@ export default async function KbihuPage() {
               </a>
             </div>
             <div className="mt-12 grid gap-4 md:grid-cols-3">
-              {asatidz.map((ustaz) => (
-                <article key={ustaz.name} className="flex items-center gap-5 rounded-2xl border border-[#dce9e5] bg-white p-5">
-                  <div
-                    className={`flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full ${ustaz.color} font-serif text-2xl font-semibold text-[#41706d] ring-4 ring-[#f1f7f4]`}
-                    aria-hidden="true"
-                  >
-                    {ustaz.initials}
-                  </div>
+              {team.list('people').map((ustaz, i) => (
+                <article key={i} className="flex items-center gap-5 rounded-2xl border border-[#dce9e5] bg-white p-5">
+                  {ustaz.photo ? (
+                    <img
+                      src={ustaz.photo}
+                      alt={`Foto ${ustaz.name}`}
+                      loading="lazy"
+                      className="h-[82px] w-[82px] shrink-0 rounded-full object-cover ring-4 ring-[#f1f7f4]"
+                    />
+                  ) : (
+                    <div
+                      className={`flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-full ${AVATAR_TONES[i % AVATAR_TONES.length]} font-serif text-2xl font-semibold text-[#41706d] ring-4 ring-[#f1f7f4]`}
+                      aria-hidden="true"
+                    >
+                      {initials(ustaz.name)}
+                    </div>
+                  )}
                   <div>
                     <h3 className="font-serif text-[18px] leading-6 text-[#204a4b]">{ustaz.name}</h3>
                     <p className="mt-1 text-[12px] text-[#789092]">{ustaz.role}</p>
-                    <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-[#edf7f2] px-2.5 py-1 text-[10px] font-bold text-[#41806d]">
-                      <Check size={11} /> Tersertifikasi Kemenag
-                    </span>
+                    {ustaz.badge && (
+                      <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-[#edf7f2] px-2.5 py-1 text-[10px] font-bold text-[#41806d]">
+                        <Check size={11} /> {ustaz.badge}
+                      </span>
+                    )}
                   </div>
                 </article>
               ))}
@@ -344,12 +347,12 @@ export default async function KbihuPage() {
             <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full border-[34px] border-white/10" />
             <div className="absolute -bottom-28 right-24 h-56 w-56 rounded-full border-[24px] border-[#9fbd83]/20" />
             <div className="relative max-w-[620px] lg:sticky lg:top-28">
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#c5e1b0]">Langkah pertama perjalanan Anda</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#c5e1b0]">{reg.s('eyebrow')}</p>
               <h2 className="mt-4 font-serif text-4xl leading-tight tracking-[-0.03em] text-white sm:text-[46px]">
-                Siapkan ibadah terbaik bersama kami.
+                {reg.s('title')}
               </h2>
               <p className="mt-4 max-w-[500px] text-[15px] leading-7 text-[#d5e9e5]">
-                Pendaftaran bimbingan Haji dan Umrah gelombang berikutnya telah dibuka. Mari belajar dan berangkat dengan tenang.
+                {reg.s('description')}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a

@@ -4,9 +4,10 @@ import { ButtonLink, Container, Eyebrow } from '@/components/site/primitives'
 import { WhatsAppIcon } from '@/components/social-icons'
 import type { PackageWithSeats } from '@/lib/data'
 import { formatDate, formatJuta } from '@/lib/format'
+import type { Content } from '@/lib/content'
 import type { SiteSettings } from '@/lib/settings-def'
 
-export default function Hero({ settings, featured, waUrl }: { settings: SiteSettings; featured?: PackageWithSeats; waUrl: string }) {
+export default function Hero({ c, settings, featured, waUrl }: { c: Content; settings: SiteSettings; featured?: PackageWithSeats; waUrl: string }) {
   const proofs = [
     settings.brand_years && `${settings.brand_years}+ tahun melayani jamaah`,
     settings.brand_ppiu_license && `Izin PPIU Kemenag No. ${settings.brand_ppiu_license}`,
@@ -26,13 +27,12 @@ export default function Hero({ settings, featured, waUrl }: { settings: SiteSett
 
       <Container className="relative grid gap-14 pb-20 pt-10 sm:pt-14 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-10 lg:pb-28 lg:pt-16">
         <div className="motion-safe:animate-rise">
-          <Eyebrow>Elfifa Travel Umroh</Eyebrow>
+          <Eyebrow>{c.s('eyebrow')}</Eyebrow>
           <h1 className="font-display mt-6 text-[2.75rem] leading-[1.03] text-ink sm:text-6xl lg:text-[4.6rem] xl:text-[5.1rem]">
-            Berangkat dengan tenang, <em className="font-normal text-brand-700">pulang membawa mabrur.</em>
+            {c.s('titleLead')} <em className="font-normal text-brand-700">{c.s('titleAccent')}</em>
           </h1>
           <p className="mt-7 max-w-xl text-[16.5px] leading-8 text-ink-soft">
-            Umroh full service yang diurus dengan amanah — dokumen, manasik, akomodasi dekat masjid, hingga Anda kembali ke tanah air.
-            Setiap pendaftaran dan pembayaran tercatat, dan dapat Anda pantau sendiri secara online.
+            {c.s('lead')}
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/#paket">
@@ -55,15 +55,15 @@ export default function Hero({ settings, featured, waUrl }: { settings: SiteSett
         <div className="relative mx-auto w-full max-w-[520px] lg:mr-0">
           <div className="arch relative aspect-[4/5] overflow-hidden bg-brand-900 shadow-[0_40px_80px_-40px_rgba(6,42,47,0.6)]">
             <img
-              src="https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=1100&q=75"
-              alt="Kubah hijau Masjid Nabawi, Madinah"
+              src={c.s('image')}
+              alt={c.s('imageAlt')}
               fetchPriority="high"
               className="size-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-brand-950/50 via-transparent to-transparent" />
           </div>
           <div className="arch-sm absolute -bottom-8 -left-6 hidden aspect-[3/4] w-40 overflow-hidden border-[6px] border-sand-50 shadow-xl sm:block lg:-left-14 lg:w-44">
-            <img src="/galeri/jamaah1.webp" alt="Rombongan jamaah Elfifa di Tanah Suci" loading="lazy" className="size-full object-cover" />
+            <img src={c.s('imageSmall')} alt={c.s('imageSmallAlt')} loading="lazy" className="size-full object-cover" />
           </div>
 
           {featured && (

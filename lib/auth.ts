@@ -119,10 +119,62 @@ export const getCurrentAdmin = cache(async (): Promise<Admin | null> => {
   return admin
 })
 
-/** Wajib dipanggil di setiap halaman & server action admin. */
-export async function requireAdmin(permission?: Permission) {
+/* ============================ 2FA ============================ */
+
+export const REQUIRE_2FA_KEY = 'security_require_2fa'
+
+export async function isTwoFactorRequired() {
+  const db = await getDb()
+  const row = await db.select().from(schema.settings).where(eq(schema.settings.key, REQUIRE_2FA_KEY)).get()
+  return row?.value === 'ya'
+}
+
+const PENDING_COOKIE = isProd ? '__Host-elfifa_2fa' : 'elfifa_2fa'
+const PENDING_MINUTES = 5
+
+/** Setelah password benar & 2FA aktif: tanda "menunggu kode", berlaku 5 menit. */
+export async function createPendingTwoFactor(admin: Admin) {
+  const exp = Date.now() + PENDING_MINUTES * 60 * 1000
+  const payload = `2fa.${admin.id}.${exp}.${sessionVersion(admin)}`
+  const store = await cookies()
+  store.set(PENDING_COOKIE, `${payload}.${sign(payload)}`, {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: isProd,
+    path: '/',
+    expires: new Date(exp),
+  })
+}
+
+export async function readPendingTwoFactor(): Promise<Admin | null> {
+  const store = await cookies()
+  const token = store.get(PENDING_COOKIE)?.value
+  if (!token) return null
+  const parts = token.split('.')
+  if (parts.length !== 5 || parts[0] !== '2fa') return null
+  const [, id, exp, version, sig] = parts
+  if (!safeEqual(sig, sign(`2fa.${id}.${exp}.${version}`))) return null
+  if (Number(exp) < Date.now()) return null
+  const db = await getDb()
+  const admin = await db.select().from(schema.admins).where(eq(schema.admins.id, Number(id))).get()
+  if (!admin || !admin.isActive || !admin.totpSecret || sessionVersion(admin) !== version) return null
+  return admin
+}
+
+export async function clearPendingTwoFactor() {
+  const store = await cookies()
+  store.delete(PENDING_COOKIE)
+}
+
+/**
+ * Wajib dipanggil di setiap halaman & server action admin.
+ * Bila Pemilik mewajibkan 2FA, admin tanpa 2FA hanya boleh membuka Akun Saya
+ * (untuk mengaktifkannya) — opsi `allowWithout2fa`.
+ */
+export async function requireAdmin(permission?: Permission, opts: { allowWithout2fa?: boolean } = {}) {
   const admin = await getCurrentAdmin()
   if (!admin) redirect('/admin/login')
+  if (!opts.allowWithout2fa && !admin.totpSecret && (await isTwoFactorRequired())) redirect('/admin/akun?wajib2fa=1')
   if (permission && !can(admin.role, permission)) redirect('/admin/tidak-diizinkan')
   return admin
 }

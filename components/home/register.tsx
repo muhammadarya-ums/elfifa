@@ -4,18 +4,19 @@ import RegistrationForm from '@/components/registration-form'
 import { Container, SectionHeading } from '@/components/site/primitives'
 import type { PackageWithSeats } from '@/lib/data'
 import { formatDate, formatJuta } from '@/lib/format'
+import type { Content } from '@/lib/content'
 import type { SiteSettings } from '@/lib/settings-def'
 
-export default function Register({ packages, settings }: { packages: PackageWithSeats[]; settings: SiteSettings }) {
+export default function Register({ c, packages, settings }: { c: Content; packages: PackageWithSeats[]; settings: SiteSettings }) {
   if (packages.length === 0) return null
   return (
     <section id="daftar" className="scroll-mt-20 bg-sand-100 py-20 sm:py-28">
       <Container className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
         <div>
           <SectionHeading
-            eyebrow="Pendaftaran online"
-            title="Satu langkah kecil menuju Baitullah."
-            description="Isi formulir singkat ini. Kode pendaftaran langsung terbit, dan tim kami menghubungi Anda melalui WhatsApp pada jam kerja untuk konfirmasi."
+            eyebrow={c.s('eyebrow')}
+            title={c.s('title')}
+            description={c.s('description')}
           />
           <dl className="mt-10 grid gap-5 text-[14.5px]">
             <div className="flex gap-4">

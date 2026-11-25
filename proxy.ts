@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server'
  */
 
 /** Rute bersama yang tetap dapat diakses apa adanya dari domain KBIHU */
-const SHARED_PREFIXES = ['/kbihu', '/admin', '/cek-status', '/paket', '/kebijakan-privasi', '/syarat-ketentuan']
+const SHARED_PREFIXES = ['/kbihu', '/admin', '/cek-status', '/paket', '/kebijakan-privasi', '/syarat-ketentuan', '/media']
 
 function buildCsp(nonce: string) {
   const isDev = process.env.NODE_ENV !== 'production'
@@ -61,7 +61,7 @@ export const config = {
   matcher: [
     {
       // Lewati API, aset Next.js, dan file statis (apa pun yang memiliki ekstensi)
-      source: '/((?!api|_next/static|_next/image|.*\\..*).*)',
+      source: '/((?!api|media/|_next/static|_next/image|.*\\..*).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

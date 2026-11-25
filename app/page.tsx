@@ -10,6 +10,7 @@ import Testimonials from '@/components/home/testimonials'
 import SiteFooter from '@/components/site/site-footer'
 import SiteHeader from '@/components/site/site-header'
 import WhatsAppFab from '@/components/site/whatsapp-fab'
+import { getBlocks } from '@/lib/content'
 import { getActivePackages, getPublishedFaqs, getPublishedTestimonials, getSettings } from '@/lib/data'
 import { waLink } from '@/lib/format'
 import { MAIN_URL } from '@/lib/site-config'
@@ -17,11 +18,12 @@ import { MAIN_URL } from '@/lib/site-config'
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const [settings, packages, testimonials, faqs] = await Promise.all([
+  const [settings, packages, testimonials, faqs, c] = await Promise.all([
     getSettings(),
     getActivePackages(),
     getPublishedTestimonials(),
     getPublishedFaqs(['umroh', 'pembayaran', 'umum']),
+    getBlocks('home.hero', 'home.packages', 'home.services', 'home.journey', 'home.profile', 'home.gallery', 'home.register'),
   ])
   const featured = packages[0]
   const waUrl = waLink(
@@ -50,15 +52,15 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd).replace(/</g, '\u003c') }} />
       <SiteHeader />
       <main id="konten">
-        <Hero settings={settings} featured={featured} waUrl={waUrl} />
-        <Packages packages={packages} waUrl={waUrl} />
-        <Services includes={featured?.includes} />
-        <Journey />
-        <Profile settings={settings} />
+        <Hero c={c['home.hero']} settings={settings} featured={featured} waUrl={waUrl} />
+        <Packages c={c['home.packages']} packages={packages} waUrl={waUrl} />
+        <Services c={c['home.services']} includes={featured?.includes} />
+        <Journey c={c['home.journey']} />
+        <Profile c={c['home.profile']} settings={settings} />
         <Testimonials items={testimonials} />
-        <Gallery instagram={settings.travel_instagram} />
+        <Gallery c={c['home.gallery']} instagram={settings.travel_instagram} />
         <Faq items={faqs} waUrl={waUrl} />
-        <Register packages={packages} settings={settings} />
+        <Register c={c['home.register']} packages={packages} settings={settings} />
       </main>
       <SiteFooter settings={settings} packages={packages} />
       <WhatsAppFab href={waUrl} />

@@ -4,7 +4,8 @@ import AdminNav from './admin-nav'
 export const dynamic = 'force-dynamic'
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
-  const admin = await requireAdmin()
+  // Penegakan 2FA wajib dilakukan per halaman (layout juga membungkus /admin/akun)
+  const admin = await requireAdmin(undefined, { allowWithout2fa: true })
 
   return (
     <div className="lg:grid lg:min-h-screen lg:grid-cols-[240px_1fr]">

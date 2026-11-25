@@ -7,9 +7,9 @@ import LoginForm from './login-form'
 export const metadata = { title: 'Login' }
 export const dynamic = 'force-dynamic'
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; sesi?: string }> }) {
   if (await getCurrentAdmin()) redirect('/admin')
-  const { next } = await searchParams
+  const { next, sesi } = await searchParams
 
   const db = await getDb()
   const [{ n }] = await db.select({ n: count() }).from(schema.admins)
@@ -24,6 +24,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <p className="mt-1 text-sm text-slate-500">Elfifa Travel Umroh &amp; KBIHU</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          {sesi === 'habis' && (
+            <p className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+              Waktu verifikasi habis. Silakan login kembali.
+            </p>
+          )}
           {n === 0 && (
             <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900">
               {boot && !boot.fromEnv ? (

@@ -7,7 +7,7 @@ import { ROLE_LABELS } from '@/lib/permissions'
 export const metadata = { title: 'Akses dibatasi' }
 
 export default async function ForbiddenPage() {
-  const me = await requireAdmin()
+  const me = await requireAdmin(undefined, { allowWithout2fa: true })
   return (
     <div className="mx-auto max-w-md py-20 text-center">
       <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-amber-50 text-amber-600">

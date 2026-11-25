@@ -1,6 +1,6 @@
 'use client'
 
-import { CalendarDays, ExternalLink, History, LayoutDashboard, LogOut, Menu, MessageSquareQuote, Package, Settings, UserCog, Users, X } from 'lucide-react'
+import { CalendarDays, ExternalLink, FileText, History, Images, LayoutDashboard, LogOut, Menu, MessageSquareQuote, Package, Settings, UserCog, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -14,6 +14,8 @@ const items: { href: string; label: string; icon: typeof Users; exact?: boolean;
   { href: '/admin/pendaftaran', label: 'Pendaftaran', icon: Users, perm: 'registration.view' },
   { href: '/admin/paket', label: 'Paket Umroh', icon: Package, perm: 'catalog.manage' },
   { href: '/admin/jadwal', label: 'Jadwal Manasik', icon: CalendarDays, perm: 'catalog.manage' },
+  { href: '/admin/halaman', label: 'Konten Halaman', icon: FileText, perm: 'content.manage' },
+  { href: '/admin/media', label: 'Pustaka Media', icon: Images, perm: 'content.manage' },
   { href: '/admin/konten', label: 'Testimoni & FAQ', icon: MessageSquareQuote, perm: 'content.manage' },
   { href: '/admin/pengaturan', label: 'Pengaturan', icon: Settings, perm: 'settings.manage' },
   { href: '/admin/log', label: 'Log Audit', icon: History, perm: 'audit.view' },

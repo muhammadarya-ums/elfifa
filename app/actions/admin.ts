@@ -6,9 +6,13 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { audit } from '@/lib/audit'
+import { blockSchema, describeIssuePath, getRevision, writeBlock } from '@/lib/content'
+import { getBlockDef, isAllowedImageUrl } from '@/lib/content-def'
+import { isMediaId, mediaUsage } from '@/lib/media'
 import {
   bootstrapCredentials,
   clientIp,
+  createPendingTwoFactor,
   createSession,
   destroySession,
   dummyPasswordHash,
@@ -110,11 +114,19 @@ export async function login(_prev: ActionResult, fd: FormData): Promise<ActionRe
   }
 
   await resetRateLimit(failKey)
+  const next = String(fd.get('next') ?? '')
+  const safeNext = /^\/admin(\/[\w\-/]*)?$/.test(next) ? next : '/admin'
+
+  // 2FA aktif → password saja belum cukup: minta kode dari aplikasi authenticator
+  if (admin.totpSecret) {
+    await createPendingTwoFactor(admin)
+    redirect(`/admin/login/verifikasi?next=${encodeURIComponent(safeNext)}`)
+  }
+
   await db.update(schema.admins).set({ lastLoginAt: new Date() }).where(eq(schema.admins.id, admin.id))
   await createSession(admin)
   await audit(admin, 'auth.login', { type: 'admin', id: admin.id })
-  const next = String(fd.get('next') ?? '')
-  redirect(/^\/admin(\/[\w\-/]*)?$/.test(next) ? next : '/admin')
+  redirect(safeNext)
 }
 
 export async function logout() {
@@ -322,6 +334,11 @@ const packageSchema = z.object({
   hotelMadinahNote: z.string().trim().max(120).default(''),
   includes: z.string().max(3000).default(''),
   bonuses: z.string().max(3000).default(''),
+  imageUrl: z
+    .string()
+    .trim()
+    .default('')
+    .refine((v) => v === '' || isAllowedImageUrl(v), 'Gambar harus dari pustaka media'),
   isFeatured: checkbox,
   isActive: checkbox,
   sortOrder: z.coerce.number().int().min(0).max(999).default(0),
@@ -535,7 +552,7 @@ const passwordRule = z
   .refine((v) => /[a-zA-Z]/.test(v) && /\d/.test(v), 'Harus mengandung huruf dan angka')
 
 export async function changePassword(_prev: ActionResult, fd: FormData): Promise<ActionResult> {
-  const admin = await requireAdmin()
+  const admin = await requireAdmin(undefined, { allowWithout2fa: true })
   const current = String(fd.get('current') ?? '')
   const next = passwordRule.safeParse(String(fd.get('next') ?? ''))
   if (!next.success) return fail('Password baru tidak valid.', { next: next.error.issues.map((i) => i.message) })
@@ -623,4 +640,70 @@ export async function deleteAdmin(id: number) {
   await db.delete(schema.admins).where(eq(schema.admins.id, id))
   await audit(me, 'admin.delete', { type: 'admin', id }, target.email)
   refreshAdmin()
+}
+
+/* ============================ CMS: KONTEN HALAMAN ============================ */
+
+export async function saveContentBlock(key: string, _prev: ActionResult, fd: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin('content.manage')
+  const def = getBlockDef(key)
+  if (!def) return fail('Blok konten tidak dikenal.')
+  const raw = String(fd.get('value') ?? '')
+  if (raw.length > 200_000) return fail('Konten terlalu besar.')
+  let json: unknown
+  try {
+    json = JSON.parse(raw)
+  } catch {
+    return fail('Data tidak valid.')
+  }
+  const parsed = blockSchema(def).safeParse(json)
+  if (!parsed.success) {
+    const issues = parsed.error.issues.map((i) => `${describeIssuePath(def, i.path)}: ${i.message}`)
+    return fail('Periksa kembali isian berikut.', { _: [...new Set(issues)] })
+  }
+  await writeBlock(key, parsed.data, admin.email)
+  await audit(admin, 'content.save', { type: 'content', id: key }, def.title)
+  revalidatePath('/', 'layout')
+  return { ok: true, message: 'Tersimpan dan sudah tampil di website.' }
+}
+
+export async function restoreContentRevision(revisionId: number) {
+  const admin = await requireAdmin('content.manage')
+  const rev = await getRevision(revisionId)
+  if (!rev) return
+  const def = getBlockDef(rev.key)
+  if (!def) return
+  let value: unknown = def.defaults
+  try {
+    const parsed = blockSchema(def).safeParse(JSON.parse(rev.value))
+    if (parsed.success) value = parsed.data
+  } catch {}
+  await writeBlock(rev.key, value, admin.email)
+  await audit(admin, 'content.restore', { type: 'content', id: rev.key }, `${def.title} · versi #${rev.id}`)
+  revalidatePath('/', 'layout')
+  redirect(`/admin/halaman/${encodeURIComponent(rev.key)}?dipulihkan=${Date.now()}`)
+}
+
+export async function resetContentBlock(key: string) {
+  const admin = await requireAdmin('content.manage')
+  const def = getBlockDef(key)
+  if (!def) return
+  await writeBlock(key, def.defaults, admin.email)
+  await audit(admin, 'content.reset', { type: 'content', id: key }, def.title)
+  revalidatePath('/', 'layout')
+  redirect(`/admin/halaman/${encodeURIComponent(key)}?direset=${Date.now()}`)
+}
+
+/* ============================ PUSTAKA MEDIA ============================ */
+
+export async function deleteMedia(id: string, _prev: ActionResult, _fd: FormData): Promise<ActionResult> {
+  const admin = await requireAdmin('content.manage')
+  if (!isMediaId(id)) return fail('ID tidak valid.')
+  const usage = await mediaUsage(id)
+  if (usage.length) return fail(`Gambar masih dipakai di ${usage.join(', ')}. Ganti dulu di sana sebelum menghapus.`)
+  const db = await getDb()
+  const row = await db.delete(schema.media).where(eq(schema.media.id, id)).returning({ fileName: schema.media.fileName }).get()
+  if (row) await audit(admin, 'media.delete', { type: 'media', id }, row.fileName)
+  refreshAdmin()
+  return { ok: true, message: 'Gambar dihapus.' }
 }

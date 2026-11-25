@@ -1,9 +1,10 @@
 import { asc } from 'drizzle-orm'
 import { Trash2 } from 'lucide-react'
 import { createAdmin, deleteAdmin, saveSettings, updateAdmin } from '@/app/actions/admin'
+import { resetAdminTotp, setRequireTwoFactor } from '@/app/actions/two-factor'
 import { ActionForm, ConfirmButton, FormField, SubmitButton } from '@/components/admin/forms'
 import { Card, inputCls, PageHeader } from '@/components/admin/ui'
-import { requireAdmin } from '@/lib/auth'
+import { isTwoFactorRequired, requireAdmin } from '@/lib/auth'
 import { getSettings } from '@/lib/data'
 import { getDb, schema } from '@/lib/db'
 import { ADMIN_ROLES } from '@/lib/db/schema'
@@ -16,9 +17,10 @@ export const metadata = { title: 'Pengaturan' }
 export default async function SettingsPage() {
   const me = await requireAdmin('settings.manage')
   const db = await getDb()
-  const [settings, admins] = await Promise.all([
+  const [settings, admins, require2fa] = await Promise.all([
     getSettings(),
     db.select().from(schema.admins).orderBy(asc(schema.admins.createdAt)),
+    isTwoFactorRequired(),
   ])
 
   return (
@@ -48,6 +50,7 @@ export default async function SettingsPage() {
               <tr className="border-b border-slate-200">
                 <th className="py-2.5 pr-4 font-semibold">Admin</th>
                 <th className="py-2.5 pr-4 font-semibold">Login terakhir</th>
+                <th className="py-2.5 pr-4 font-semibold">2FA</th>
                 <th className="py-2.5 pr-4 font-semibold">Peran &amp; status</th>
                 <th className="py-2.5" />
               </tr>
@@ -62,6 +65,22 @@ export default async function SettingsPage() {
                     <p className="text-xs text-slate-500">{a.email}</p>
                   </td>
                   <td className="py-3 pr-4 text-xs text-slate-500">{formatDateTime(a.lastLoginAt)}</td>
+                  <td className="py-3 pr-4">
+                    {a.totpSecret ? (
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">Aktif</span>
+                        {a.id !== me.id && (
+                          <form action={resetAdminTotp.bind(null, a.id)}>
+                            <ConfirmButton message={`Reset 2FA ${a.email}? Admin ini akan keluar dari semua perangkat dan perlu mengaktifkan 2FA lagi.`} className="text-xs font-semibold text-slate-500 hover:text-rose-600 hover:underline">
+                              Reset
+                            </ConfirmButton>
+                          </form>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">Belum</span>
+                    )}
+                  </td>
                   <td className="py-3 pr-4">
                     {a.id === me.id ? (
                       <span className="text-sm font-medium text-slate-700">{ROLE_LABELS[a.role]}</span>
@@ -95,6 +114,17 @@ export default async function SettingsPage() {
           </table>
         </div>
         <p className="mt-3 text-xs text-slate-500">Perubahan peran atau penonaktifan langsung mengeluarkan admin tersebut dari semua perangkat. Sistem selalu menyisakan minimal satu Pemilik aktif.</p>
+
+        <form action={setRequireTwoFactor} className="mt-6 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input type="checkbox" name="require" defaultChecked={require2fa} disabled={!me.totpSecret} className="size-4 accent-[#007a82]" />
+            <span>
+              <strong>Wajibkan 2FA untuk semua admin.</strong> Admin tanpa 2FA hanya bisa membuka Akun Saya sampai mengaktifkannya.
+            </span>
+          </label>
+          <SubmitButton className="px-3 py-1 text-xs">Simpan</SubmitButton>
+          {!me.totpSecret && <p className="w-full text-xs text-amber-700">Aktifkan 2FA pada akun Anda sendiri dulu (Akun Saya) agar Anda tidak terkunci.</p>}
+        </form>
 
         <div className="mt-8 grid gap-8 border-t border-slate-100 pt-6 lg:grid-cols-[1.2fr_1fr]">
           <div>

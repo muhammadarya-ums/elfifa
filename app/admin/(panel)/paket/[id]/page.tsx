@@ -3,10 +3,12 @@ import { Trash2 } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { deletePackage, savePackage } from '@/app/actions/admin'
 import { ActionForm, ConfirmButton, FormField } from '@/components/admin/forms'
+import { ImageField } from '@/components/admin/image-picker'
 import { btnDanger, Card, inputCls, Notice, PageHeader } from '@/components/admin/ui'
 import { requireAdmin } from '@/lib/auth'
 import { getDb, schema } from '@/lib/db'
 import type { Package } from '@/lib/db/schema'
+import { listMedia } from '@/lib/media'
 
 export const metadata = { title: 'Paket' }
 
@@ -29,6 +31,7 @@ export default async function PackageFormPage({
     if (!pkg) notFound()
   }
 
+  const library = (await listMedia()).map((m) => ({ id: m.id, url: m.url, width: m.width, height: m.height, bytes: m.bytes, fileName: m.fileName }))
   const num = (v: number | null | undefined) => (v ? v.toLocaleString('id-ID') : '')
 
   return (
@@ -70,6 +73,12 @@ export default async function PackageFormPage({
               <input id="originalPriceIdr" name="originalPriceIdr" inputMode="numeric" defaultValue={num(pkg?.originalPriceIdr)} className={inputCls} />
             </FormField>
           </div>
+        </Card>
+
+        <Card title="Foto paket">
+          <FormField label="Foto (opsional)" name="imageUrl" hint="Tampil di kartu paket & halaman detail. Rasio mendatar 16:10 paling pas.">
+            <ImageField name="imageUrl" defaultValue={pkg?.imageUrl ?? ''} library={library} optional />
+          </FormField>
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">

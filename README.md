@@ -22,8 +22,11 @@ Next.js 16 (App Router, Server Actions) · Tailwind CSS 4 · Drizzle ORM · libS
 - **Pendaftaran** — cari & filter, input manual, status, catatan internal, ekspor CSV (aman dari formula injection)
 - **Pembayaran** — catat DP/pelunasan; status naik otomatis ke *DP diterima* / *Lunas*
 - **Paket, Jadwal, Testimoni & FAQ** — kelola konten tanpa ubah kode
+- **Konten halaman (CMS)** — seluruh teks & foto beranda, KBIHU (hero, kurikulum, asatidz), galeri, serta halaman legal (Markdown aman); setiap simpan menyimpan versi sebelumnya (30 versi) yang bisa dipulihkan
+- **Pustaka media** — upload foto (dikompres di browser, di-encode ulang ke WebP di server, metadata/GPS dibuang); foto per paket; gambar yang masih dipakai tidak bisa dihapus
 - **Pengaturan** — identitas brand (nama badan usaha, izin PPIU, tagline, statistik), kontak, rekening, media sosial
 - **Akses tim** — multi-admin dengan peran, nonaktifkan akun, minimal satu Pemilik selalu tersisa
+- **Verifikasi dua langkah (2FA)** — TOTP (Google/Microsoft Authenticator, Authy) + 10 kode cadangan; Pemilik dapat mewajibkan 2FA untuk seluruh tim dan mereset 2FA admin yang kehilangan HP
 - **Log audit** — seluruh aktivitas admin tercatat (siapa, apa, kapan, IP)
 
 ### Peran & hak akses
@@ -31,7 +34,7 @@ Next.js 16 (App Router, Server Actions) · Tailwind CSS 4 · Drizzle ORM · libS
 |---|:-:|:-:|:-:|
 | Lihat & tindak lanjuti pendaftaran (status, catatan) | ✓ | ✓ | ✓ |
 | Pembayaran, ubah tagihan, ekspor CSV, hapus pendaftaran | ✓ | ✓ | |
-| Paket, jadwal, testimoni & FAQ | ✓ | ✓ | |
+| Paket, jadwal, konten halaman, pustaka media, testimoni & FAQ | ✓ | ✓ | |
 | Pengaturan, akun admin, log audit | ✓ | | |
 
 Matriks ini didefinisikan di satu tempat (`lib/permissions.ts`) dan ditegakkan di **setiap** server action, halaman, dan API — bukan hanya disembunyikan dari menu.
@@ -47,6 +50,11 @@ Matriks ini didefinisikan di satu tempat (`lib/permissions.ts`) dan ditegakkan d
 - **Content-Security-Policy dengan nonce per request** (`proxy.ts`) + `strict-dynamic`; HSTS, `X-Frame-Options: DENY`, COOP, Permissions-Policy, `poweredByHeader` dimatikan
 - **Validasi** semua input dengan Zod di server; honeypot anti-bot; persetujuan privasi wajib & tercatat (`consent_at`)
 - **Panel admin** `no-store` & `noindex`; ekspor CSV dinetralkan dari formula injection
+- **2FA TOTP** — rahasia terenkripsi AES-256-GCM (kunci turunan HKDF dari `AUTH_SECRET`), kode tidak bisa dipakai ulang (anti-replay), kode cadangan disimpan sebagai hash & sekali pakai, percobaan kode dibatasi
+- **Upload aman** — format dideteksi dari isi file (bukan ekstensi), SVG ditolak, gambar di-decode lalu di-encode ulang (menetralkan file *polyglot*), batas piksel anti *decompression bomb*, metadata dibuang; route upload memeriksa Origin (CSRF) & dibatasi per admin; media disajikan dengan `nosniff` + CSP `sandbox`
+- **Konten CMS** divalidasi skema ketat di server (field asing ditolak, batas panjang, gambar hanya dari pustaka/sumber tepercaya); Markdown dirender tanpa HTML mentah & hanya tautan http(s)/mailto/tel
+- **Dependensi** — paket tak terpakai dibuang, Next.js dinaikkan ke 16.4.6 (menutup celah RCE critical di versi sebelumnya); `pnpm audit --prod`: 0 kerentanan
+- **`/.well-known/security.txt`** (RFC 9116) untuk pelaporan celah keamanan
 
 ## Menjalankan secara lokal
 
@@ -76,21 +84,43 @@ CI GitHub Actions (`.github/workflows/ci.yml`) menjalankan ketiganya pada setiap
    | Variabel | Wajib | Keterangan |
    |---|---|---|
    | `DATABASE_URL` + `DATABASE_AUTH_TOKEN` | ✅ (atau `TURSO_*`) | Koneksi Turso/libSQL |
-   | `AUTH_SECRET` | ✅ | ≥ 32 karakter acak: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+   | `AUTH_SECRET` | ✅ | ≥ 32 karakter acak: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. **Jangan diganti setelah tayang** kecuali darurat: semua sesi berakhir dan 2FA setiap admin harus direset (pakai kode cadangan / reset oleh Pemilik) |
    | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | ✅ untuk login pertama | Akun Pemilik pertama dibuat otomatis saat login pertama |
 3. **Deploy.** Migrasi & data awal berjalan otomatis pada request pertama.
 4. Pantau kesehatan aplikasi di `/api/health` (cocok untuk uptime monitor).
 
 ### Checklist sebelum go-live
-- [ ] Login, ganti password Pemilik, buat akun untuk tim dengan peran yang sesuai
+- [ ] Login, ganti password Pemilik, **aktifkan 2FA**, lalu buat akun tim dengan peran yang sesuai dan centang *Wajibkan 2FA*
 - [ ] **Pengaturan**: isi nama badan usaha, **nomor izin PPIU**, tahun pengalaman, nomor WhatsApp, alamat, rekening resmi, tautan media sosial
 - [ ] Ganti/hapus paket & jadwal contoh dengan data asli; periksa FAQ
 - [ ] Tambahkan testimoni asli (dengan izin jamaah) — bagian testimoni tersembunyi sampai ada yang terbit
+- [ ] **Konten Halaman**: ganti nama & foto asatidz, foto galeri, dan teks yang perlu disesuaikan
 - [ ] Tinjau **Kebijakan Privasi** dan **Syarat & Ketentuan** bersama penasihat hukum
 - [ ] Hubungkan domain beserta domain KBIHU (`kbihu-elfifa.*` / `kbihu.*`)
 
 ### Dua domain
 `proxy.ts` mengarahkan host berawalan `kbihu-elfifa.` atau `kbihu.` ke halaman KBIHU. Rute `/admin`, `/cek-status`, `/paket`, dan halaman legal dapat diakses dari kedua domain.
+
+## Alamat akses
+
+| Untuk | Path |
+|---|---|
+| Website travel | `/` |
+| Detail paket | `/paket/<slug>` |
+| Halaman KBIHU | `/kbihu` (atau domain `kbihu-elfifa.*`) |
+| Cek status jamaah | `/cek-status` |
+| Login admin | `/admin/login` (lalu `/admin/login/verifikasi` bila 2FA aktif) |
+| Dashboard | `/admin` |
+| Pendaftaran | `/admin/pendaftaran` |
+| Paket umroh | `/admin/paket` |
+| Jadwal manasik | `/admin/jadwal` |
+| **Konten halaman (CMS)** | `/admin/halaman` |
+| **Pustaka media** | `/admin/media` |
+| Testimoni & FAQ | `/admin/konten` |
+| Pengaturan & akses tim | `/admin/pengaturan` |
+| Log audit | `/admin/log` |
+| Akun saya & 2FA | `/admin/akun` |
+| Health check | `/api/health` |
 
 ## Struktur
 
@@ -116,6 +146,10 @@ lib/
   permissions.ts           Matriks hak akses
   audit.ts                 Log audit
   settings-def.ts          Daftar pengaturan & default
+  content-def.ts           Definisi blok CMS (field, batas, nilai bawaan)
+  content.ts               Baca/simpan konten + riwayat versi
+  media.ts                 Pemrosesan & penyimpanan gambar
+  totp.ts, crypto.ts       2FA & enkripsi rahasia
 drizzle/                   File migrasi SQL
 proxy.ts                   CSP nonce + routing multi-domain
 tests/                     Vitest

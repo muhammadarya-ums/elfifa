@@ -1,17 +1,21 @@
 import { changePassword } from '@/app/actions/admin'
 import { ActionForm, FormField } from '@/components/admin/forms'
-import { Card, inputCls, PageHeader } from '@/components/admin/ui'
+import { Card, inputCls, Notice, PageHeader } from '@/components/admin/ui'
 import { requireAdmin } from '@/lib/auth'
 import { formatDateTime } from '@/lib/format'
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from '@/lib/permissions'
+import TwoFactorCard from './two-factor-card'
 
 export const metadata = { title: 'Akun Saya' }
 
-export default async function AccountPage() {
-  const me = await requireAdmin()
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ wajib2fa?: string }> }) {
+  const me = await requireAdmin(undefined, { allowWithout2fa: true })
   return (
     <>
       <PageHeader title="Akun saya" description="Informasi akun dan keamanan login Anda." />
+      {(await searchParams).wajib2fa && !me.totpSecret && (
+        <Notice tone="warning">Pemilik mewajibkan verifikasi dua langkah (2FA). Aktifkan 2FA di bawah untuk melanjutkan ke panel admin.</Notice>
+      )}
       <div className="grid gap-6 xl:grid-cols-2">
         <Card title="Profil">
           <dl className="grid gap-4 text-sm">
@@ -48,6 +52,10 @@ export default async function AccountPage() {
             </FormField>
           </ActionForm>
           <p className="mt-4 text-xs text-slate-500">Setelah password diganti, sesi di perangkat lain otomatis keluar.</p>
+        </Card>
+
+        <Card title="Verifikasi dua langkah (2FA)" className="xl:col-span-2">
+          <TwoFactorCard enabled={!!me.totpSecret} recoveryLeft={(JSON.parse(me.recoveryCodes || '[]') as string[]).length} />
         </Card>
       </div>
     </>

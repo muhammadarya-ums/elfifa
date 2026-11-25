@@ -1,21 +1,7 @@
 import { Check } from 'lucide-react'
 import { Container, SectionHeading } from '@/components/site/primitives'
+import type { Content } from '@/lib/content'
 import { splitLines } from '@/lib/format'
-
-const PILLARS = [
-  {
-    title: 'Ibadah sesuai tuntunan',
-    body: 'Mutawwif yang berilmu mendampingi setiap rukun dan wajib umroh, dibekali manasik sebelum berangkat agar ibadah Anda sah dan tenang.',
-  },
-  {
-    title: 'Dekat dengan masjid',
-    body: 'Hotel dipilih berdasarkan jarak berjalan kaki ke Masjidil Haram dan Masjid Nabawi — supaya jamaah lansia pun tetap bisa salat berjamaah.',
-  },
-  {
-    title: 'Transparan & tercatat',
-    body: 'Setiap pendaftar mendapat kode unik. Status dokumen dan riwayat pembayaran bisa dicek kapan saja, dan transfer hanya ke rekening resmi perusahaan.',
-  },
-]
 
 const DEFAULT_INCLUDES = [
   'Tiket pesawat pulang-pergi',
@@ -28,7 +14,7 @@ const DEFAULT_INCLUDES = [
   'Manasik sebelum berangkat',
 ]
 
-export default function Services({ includes }: { includes?: string }) {
+export default function Services({ c, includes }: { c: Content; includes?: string }) {
   const items = includes ? splitLines(includes) : DEFAULT_INCLUDES
   return (
     <section id="layanan" className="scroll-mt-20 bg-sand-50 py-20 sm:py-28">
@@ -36,27 +22,27 @@ export default function Services({ includes }: { includes?: string }) {
         <div className="grid gap-14 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
           <div className="lg:sticky lg:top-28 lg:self-start">
             <SectionHeading
-              eyebrow="Mengapa Elfifa"
+              eyebrow={c.s('eyebrow')}
               title={
                 <>
-                  Diurus dengan amanah, <em className="text-brand-700">dari awal hingga pulang.</em>
+                  {c.s('titleLead')} <em className="text-brand-700">{c.s('titleAccent')}</em>
                 </>
               }
-              description="Kami percaya perjalanan ibadah tidak boleh dibebani urusan teknis. Tugas kami memastikan setiap detail beres, supaya Anda cukup fokus beribadah."
+              description={c.s('description')}
             />
             <figure className="mt-10 hidden lg:block">
               <div className="arch-sm aspect-[4/3] overflow-hidden">
-                <img src="/galeri/jamaah2.webp" alt="Rombongan jamaah Elfifa berpakaian ihram di Pusat Layanan Haji dan Umrah Terpadu" loading="lazy" className="size-full object-cover" />
+                <img src={c.s('image')} alt={c.s('imageAlt')} loading="lazy" className="size-full object-cover" />
               </div>
-              <figcaption className="mt-3 text-[12.5px] text-ink-muted">Rombongan jamaah Elfifa di Pusat Layanan Haji dan Umrah Terpadu.</figcaption>
+              {c.s('caption') && <figcaption className="mt-3 text-[12.5px] text-ink-muted">{c.s('caption')}</figcaption>}
             </figure>
           </div>
 
           <div>
             <ol className="divide-y divide-sand-200 border-y border-sand-200">
-              {PILLARS.map((p, i) => (
-                <li key={p.title} className="grid gap-4 py-9 sm:grid-cols-[72px_1fr]">
-                  <span className="font-display text-4xl leading-none text-gold-500">0{i + 1}</span>
+              {c.list('pillars').map((p, i) => (
+                <li key={i} className="grid gap-4 py-9 sm:grid-cols-[72px_1fr]">
+                  <span className="font-display text-4xl leading-none text-gold-500">{String(i + 1).padStart(2, '0')}</span>
                   <div>
                     <h3 className="font-display text-[1.65rem] leading-snug text-ink">{p.title}</h3>
                     <p className="mt-3 text-[15px] leading-7 text-ink-soft">{p.body}</p>
