@@ -18,3 +18,7 @@ node_modules
 # Database lokal (SQLite)
 /data/
 .env
+
+.vercel
+.env*
+!.env.example
