@@ -2,11 +2,13 @@ import { ExternalLink, Plus, Star } from 'lucide-react'
 import Link from 'next/link'
 import { btnPrimary, EmptyState, Notice, PageHeader } from '@/components/admin/ui'
 import { getAllPackages } from '@/lib/admin-queries'
+import { requireAdmin } from '@/lib/auth'
 import { formatDate, formatRupiah } from '@/lib/format'
 
 export const metadata = { title: 'Paket Umroh' }
 
 export default async function PackagesPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  await requireAdmin('catalog.manage')
   const [packages, sp] = await Promise.all([getAllPackages(), searchParams])
 
   return (

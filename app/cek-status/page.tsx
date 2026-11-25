@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Container, Eyebrow } from '@/components/site/primitives'
 import SiteShell from '@/components/site-shell'
 import StatusChecker from '@/components/status-checker'
 import { getSettings } from '@/lib/data'
@@ -16,16 +17,16 @@ export default async function CekStatusPage({ searchParams }: { searchParams: Pr
 
   return (
     <SiteShell settings={settings}>
-      <section className="px-5 py-14 sm:py-20">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#d9923b]">Portal Jamaah</p>
-          <h1 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">Cek Status Pendaftaran</h1>
-          <p className="mb-8 mt-3 text-slate-600">
-            Masukkan kode pendaftaran yang Anda terima setelah mendaftar (berawalan <strong>ELF-</strong> untuk Umroh atau{' '}
-            <strong>KBH-</strong> untuk bimbingan KBIHU) beserta nomor WhatsApp yang didaftarkan.
+      <section className="py-14 sm:py-20">
+        <Container className="max-w-3xl">
+          <Eyebrow>Portal jamaah</Eyebrow>
+          <h1 className="font-display mt-5 text-[2.6rem] leading-[1.05] text-ink sm:text-5xl">Cek status pendaftaran</h1>
+          <p className="mb-10 mt-5 text-[15.5px] leading-7 text-ink-soft">
+            Masukkan kode pendaftaran (berawalan <strong className="font-semibold text-ink">ELF-</strong> untuk umroh atau{' '}
+            <strong className="font-semibold text-ink">KBH-</strong> untuk bimbingan KBIHU) beserta nomor WhatsApp yang Anda daftarkan.
           </p>
           <StatusChecker defaultCode={kode?.slice(0, 12)} bankInfo={settings.travel_bank} />
-        </div>
+        </Container>
       </section>
     </SiteShell>
   )

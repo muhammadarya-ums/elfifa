@@ -1,21 +1,26 @@
 'use client'
 
-import { CalendarDays, ExternalLink, LayoutDashboard, LogOut, Menu, Package, Settings, Users, X } from 'lucide-react'
+import { CalendarDays, ExternalLink, History, LayoutDashboard, LogOut, Menu, MessageSquareQuote, Package, Settings, UserCog, Users, X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { logout } from '@/app/actions/admin'
+import type { AdminRole } from '@/lib/db/schema'
+import { can, ROLE_LABELS, type Permission } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 
-const items = [
+const items: { href: string; label: string; icon: typeof Users; exact?: boolean; perm?: Permission }[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/admin/pendaftaran', label: 'Pendaftaran', icon: Users },
-  { href: '/admin/paket', label: 'Paket Umroh', icon: Package },
-  { href: '/admin/jadwal', label: 'Jadwal Manasik', icon: CalendarDays },
-  { href: '/admin/pengaturan', label: 'Pengaturan', icon: Settings },
+  { href: '/admin/pendaftaran', label: 'Pendaftaran', icon: Users, perm: 'registration.view' },
+  { href: '/admin/paket', label: 'Paket Umroh', icon: Package, perm: 'catalog.manage' },
+  { href: '/admin/jadwal', label: 'Jadwal Manasik', icon: CalendarDays, perm: 'catalog.manage' },
+  { href: '/admin/konten', label: 'Testimoni & FAQ', icon: MessageSquareQuote, perm: 'content.manage' },
+  { href: '/admin/pengaturan', label: 'Pengaturan', icon: Settings, perm: 'settings.manage' },
+  { href: '/admin/log', label: 'Log Audit', icon: History, perm: 'audit.view' },
+  { href: '/admin/akun', label: 'Akun Saya', icon: UserCog },
 ]
 
-export default function AdminNav({ adminName, adminEmail }: { adminName: string; adminEmail: string }) {
+export default function AdminNav({ adminName, adminEmail, role }: { adminName: string; adminEmail: string; role: AdminRole }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
@@ -23,7 +28,7 @@ export default function AdminNav({ adminName, adminEmail }: { adminName: string;
 
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 px-3" aria-label="Menu admin">
-      {items.map(({ href, label, icon: Icon, exact }) => {
+      {items.filter((i) => !i.perm || can(role, i.perm)).map(({ href, label, icon: Icon, exact }) => {
         const active = exact ? pathname === href : pathname.startsWith(href)
         return (
           <Link
@@ -54,6 +59,7 @@ export default function AdminNav({ adminName, adminEmail }: { adminName: string;
     <div className="border-t border-white/10 p-4">
       <p className="truncate text-sm font-semibold text-white">{adminName}</p>
       <p className="truncate text-xs text-slate-400">{adminEmail}</p>
+      <span className="mt-2 inline-block rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">{ROLE_LABELS[role]}</span>
       <form action={logout} className="mt-3">
         <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/10">
           <LogOut className="size-3.5" /> Keluar

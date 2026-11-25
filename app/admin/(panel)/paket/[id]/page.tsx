@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { deletePackage, savePackage } from '@/app/actions/admin'
 import { ActionForm, ConfirmButton, FormField } from '@/components/admin/forms'
 import { btnDanger, Card, inputCls, Notice, PageHeader } from '@/components/admin/ui'
+import { requireAdmin } from '@/lib/auth'
 import { getDb, schema } from '@/lib/db'
 import type { Package } from '@/lib/db/schema'
 
@@ -16,6 +17,7 @@ export default async function PackageFormPage({
   params: Promise<{ id: string }>
   searchParams: Promise<{ disimpan?: string }>
 }) {
+  await requireAdmin('catalog.manage')
   const [{ id: idParam }, sp] = await Promise.all([params, searchParams])
   const isNew = idParam === 'baru'
   let pkg: Package | undefined

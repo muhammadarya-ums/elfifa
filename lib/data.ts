@@ -3,7 +3,7 @@ import 'server-only'
 import { and, asc, desc, eq, gte, inArray, ne, sql } from 'drizzle-orm'
 import { cache } from 'react'
 import { getDb, schema } from './db'
-import type { Package } from './db/schema'
+import type { FaqCategory, Package } from './db/schema'
 import { todayIso } from './format'
 import { DEFAULT_SETTINGS, SETTING_KEYS, type SiteSettings } from './settings-def'
 
@@ -79,3 +79,21 @@ export async function getPaymentsTotal(registrationId: number) {
     .get()
   return Number(row?.total ?? 0)
 }
+
+export const getPublishedTestimonials = cache(async () => {
+  const db = await getDb()
+  return db
+    .select()
+    .from(schema.testimonials)
+    .where(eq(schema.testimonials.isPublished, true))
+    .orderBy(asc(schema.testimonials.sortOrder), desc(schema.testimonials.createdAt))
+    .limit(9)
+})
+
+export const getPublishedFaqs = cache(async (categories?: FaqCategory[]) => {
+  const db = await getDb()
+  const where = categories?.length
+    ? and(eq(schema.faqs.isPublished, true), inArray(schema.faqs.category, categories))
+    : eq(schema.faqs.isPublished, true)
+  return db.select().from(schema.faqs).where(where).orderBy(asc(schema.faqs.sortOrder), asc(schema.faqs.id))
+})

@@ -4,6 +4,17 @@
  */
 export const SETTING_GROUPS = [
   {
+    id: 'brand',
+    title: 'Identitas & kredibilitas',
+    fields: [
+      { key: 'brand_legal_name', label: 'Nama badan usaha', hint: 'cth. PT Elfifa Mulia Wisata. Kosongkan bila belum ingin ditampilkan.', default: '' },
+      { key: 'brand_ppiu_license', label: 'Nomor izin PPIU (Kemenag)', hint: 'Ditampilkan di beranda & footer. Kosongkan = tidak ditampilkan.', default: '' },
+      { key: 'brand_tagline', label: 'Tagline', default: 'Aman, amanah, alhamdulillah.' },
+      { key: 'brand_years', label: 'Tahun pengalaman', hint: 'Angka saja, cth. 10. Kosongkan = tidak ditampilkan.', default: '10' },
+      { key: 'brand_pilgrims', label: 'Jumlah jamaah yang telah diberangkatkan', hint: 'Angka saja, cth. 2500. Kosongkan = tidak ditampilkan.', default: '' },
+    ],
+  },
+  {
     id: 'travel',
     title: 'Elfifa Travel Umroh',
     fields: [
@@ -26,6 +37,7 @@ export const SETTING_GROUPS = [
       { key: 'kbihu_email', label: 'Email', default: 'sekretariat@kbihuelfifa.id' },
       { key: 'kbihu_address', label: 'Alamat sekretariat', default: 'Jl. Kemakmuran No. 18, Bekasi Selatan' },
       { key: 'kbihu_office_hours', label: 'Jam layanan', default: 'Senin – Jumat, 08.00 – 16.00 WIB' },
+      { key: 'kbihu_years', label: 'Tahun membimbing', hint: 'Angka saja. Kosongkan = tidak ditampilkan.', default: '12' },
       { key: 'kbihu_season', label: 'Label gelombang', hint: 'Tampil di atas tabel jadwal manasik', default: 'Gelombang Haji 1448 H' },
       { key: 'kbihu_instagram', label: 'URL Instagram', default: 'https://www.instagram.com/' },
       { key: 'kbihu_facebook', label: 'URL Facebook', default: 'https://www.facebook.com/' },

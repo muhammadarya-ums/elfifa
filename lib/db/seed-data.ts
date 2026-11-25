@@ -19,8 +19,11 @@ function addDays(days: number) {
 export async function seedDefaults(database: LibSQLDatabase<typeof schema>) {
   // Cek cepat di luar transaksi (jalur umum: sudah pernah di-seed)
   const done = await database.select().from(schema.settings).where(eq(schema.settings.key, SEED_FLAG)).get()
-  if (done) return
+  if (!done) await seedInitial(database)
+  await seedFaqs(database)
+}
 
+async function seedInitial(database: LibSQLDatabase<typeof schema>) {
   await database.transaction(
     async (db) => {
       const flag = await db.select().from(schema.settings).where(eq(schema.settings.key, SEED_FLAG)).get()
@@ -108,6 +111,66 @@ export async function seedDefaults(database: LibSQLDatabase<typeof schema>) {
         .insert(schema.settings)
         .values({ key: SEED_FLAG, value: new Date().toISOString() })
         .onConflictDoNothing()
+    },
+    { behavior: 'immediate' },
+  )
+}
+
+const FAQ_FLAG = '__seed_faq_v1'
+
+/** FAQ awal (dapat diedit admin). Dijalankan sekali, termasuk pada database lama. */
+async function seedFaqs(database: LibSQLDatabase<typeof schema>) {
+  const done = await database.select().from(schema.settings).where(eq(schema.settings.key, FAQ_FLAG)).get()
+  if (done) return
+  await database.transaction(
+    async (db) => {
+      const again = await db.select().from(schema.settings).where(eq(schema.settings.key, FAQ_FLAG)).get()
+      if (again) return
+      await db.insert(schema.faqs).values([
+        {
+          category: 'umroh',
+          sortOrder: 1,
+          question: 'Bagaimana cara mendaftar umroh di Elfifa?',
+          answer:
+            'Isi formulir pendaftaran di website ini. Anda akan langsung mendapat kode pendaftaran, lalu tim kami menghubungi Anda melalui WhatsApp untuk konfirmasi paket, kelengkapan dokumen, dan pembayaran uang muka.',
+        },
+        {
+          category: 'umroh',
+          sortOrder: 2,
+          question: 'Dokumen apa saja yang perlu disiapkan?',
+          answer:
+            'Umumnya: KTP, Kartu Keluarga, paspor yang masih berlaku minimal 6 bulan dari tanggal keberangkatan, pas foto, dan bukti vaksin meningitis. Daftar final selalu kami konfirmasi ulang mengikuti regulasi terbaru saat Anda mendaftar.',
+        },
+        {
+          category: 'umroh',
+          sortOrder: 3,
+          question: 'Saya belum punya paspor. Apakah tetap bisa mendaftar?',
+          answer:
+            'Bisa. Pilih “Belum / sedang diurus” pada formulir. Tim kami akan memandu proses pembuatan paspor agar selesai sebelum batas pengurusan visa.',
+        },
+        {
+          category: 'pembayaran',
+          sortOrder: 4,
+          question: 'Bagaimana skema pembayarannya?',
+          answer:
+            'Pembayaran dilakukan bertahap: uang muka untuk mengunci kursi, lalu pelunasan sebelum keberangkatan sesuai jadwal yang kami sampaikan. Transfer hanya ke rekening resmi atas nama perusahaan dan cantumkan kode pendaftaran pada berita transfer.',
+        },
+        {
+          category: 'pembayaran',
+          sortOrder: 5,
+          question: 'Bagaimana saya memantau status pendaftaran dan pembayaran?',
+          answer:
+            'Buka halaman Cek Status, masukkan kode pendaftaran dan nomor WhatsApp yang Anda daftarkan. Status, riwayat pembayaran, dan sisa tagihan tampil di sana dan diperbarui setiap kali kami mencatat pembayaran Anda.',
+        },
+        {
+          category: 'umum',
+          sortOrder: 6,
+          question: 'Apa beda Elfifa Travel dan KBIHU Elfifa?',
+          answer:
+            'Elfifa Travel menyelenggarakan perjalanan umroh lengkap (tiket, visa, hotel, transportasi, mutawwif). KBIHU Elfifa adalah kelompok bimbingan ibadah haji dan umrah yang fokus pada pembelajaran manasik dan pendampingan ibadah.',
+        },
+      ])
+      await db.insert(schema.settings).values({ key: FAQ_FLAG, value: new Date().toISOString() }).onConflictDoNothing()
     },
     { behavior: 'immediate' },
   )

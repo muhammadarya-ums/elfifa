@@ -5,6 +5,8 @@ import { ActionForm, AutoSubmitSelect, ConfirmButton, FormField } from '@/compon
 import { btnDanger, Card, inputCls, Notice, PageHeader, StatusBadge } from '@/components/admin/ui'
 import { WhatsAppIcon } from '@/components/social-icons'
 import { getAllPackages, getRegistrationDetail } from '@/lib/admin-queries'
+import { requireAdmin } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { PAYMENT_METHODS, REGISTRATION_STATUSES } from '@/lib/db/schema'
 import { displayPhone, formatDate, formatDateTime, formatRupiah, todayIso, waLink } from '@/lib/format'
 import { PROGRAM_LABELS, STATUS_LABELS } from '@/lib/labels'
@@ -25,6 +27,8 @@ export default async function RegistrationDetailPage({
   params: Promise<{ id: string }>
   searchParams: Promise<{ dibuat?: string }>
 }) {
+  const admin = await requireAdmin('registration.view')
+  const canPay = can(admin.role, 'payment.manage')
   const [{ id: idParam }, sp] = await Promise.all([params, searchParams])
   const id = Number(idParam)
   if (!Number.isInteger(id)) notFound()
@@ -95,9 +99,9 @@ export default async function RegistrationDetailPage({
           </Card>
 
           <Card title="Data pendaftaran">
-            {/* key: remount bila status berubah dari luar form agar tidak menimpa dengan nilai lama */}
-            <ActionForm key={reg.status} action={updateRegistration.bind(null, reg.id)} submitLabel="Simpan perubahan">
-              <RegistrationFields reg={reg} packages={packages} />
+            {/* Status sengaja tidak ada di form ini — diubah lewat kontrol Ringkasan (satu sumber kebenaran) */}
+            <ActionForm action={updateRegistration.bind(null, reg.id)} submitLabel="Simpan perubahan">
+              <RegistrationFields reg={reg} packages={packages} canEditPrice={canPay} showStatus={false} />
             </ActionForm>
           </Card>
         </div>
@@ -130,17 +134,20 @@ export default async function RegistrationDetailPage({
                         {p.note ? ` · ${p.note}` : ''}
                       </p>
                     </div>
+                    {canPay && (
                     <form action={deletePayment.bind(null, p.id, reg.id)}>
                       <ConfirmButton message="Hapus catatan pembayaran ini?" className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600">
                         <Trash2 className="size-4" />
                         <span className="sr-only">Hapus</span>
                       </ConfirmButton>
                     </form>
+                    )}
                   </li>
                 ))}
               </ul>
             )}
 
+            {canPay && (
             <div className="mt-5 rounded-lg bg-slate-50 p-4">
               <p className="mb-3 text-sm font-semibold text-slate-700">Catat pembayaran</p>
               <ActionForm action={addPayment.bind(null, reg.id)} submitLabel="Tambah pembayaran" resetOnSuccess>
@@ -165,8 +172,10 @@ export default async function RegistrationDetailPage({
               </ActionForm>
               <p className="mt-3 text-xs text-slate-500">Status otomatis naik ke “DP diterima” atau “Lunas” sesuai total pembayaran.</p>
             </div>
+            )}
           </Card>
 
+          {can(admin.role, 'registration.delete') && (
           <Card title="Zona berbahaya">
             <p className="mb-3 text-sm text-slate-500">Menghapus pendaftaran juga menghapus seluruh catatan pembayarannya. Untuk pembatalan biasa, cukup ubah status menjadi “Batal”.</p>
             <form action={deleteRegistration.bind(null, reg.id)}>
@@ -175,6 +184,7 @@ export default async function RegistrationDetailPage({
               </ConfirmButton>
             </form>
           </Card>
+          )}
         </div>
       </div>
     </>

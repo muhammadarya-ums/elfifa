@@ -2,6 +2,8 @@ import { Download, Plus, Search } from 'lucide-react'
 import Link from 'next/link'
 import { btnPrimary, btnSecondary, EmptyState, inputCls, Notice, PageHeader, StatusBadge } from '@/components/admin/ui'
 import { getAllPackages, listRegistrations, parseFilters } from '@/lib/admin-queries'
+import { requireAdmin } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { PROGRAMS, REGISTRATION_STATUSES } from '@/lib/db/schema'
 import { displayPhone, formatDateTime, formatRupiah } from '@/lib/format'
 import { PROGRAM_LABELS, STATUS_LABELS } from '@/lib/labels'
@@ -11,6 +13,7 @@ export const metadata = { title: 'Pendaftaran' }
 type SP = Record<string, string | string[] | undefined>
 
 export default async function RegistrationsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const admin = await requireAdmin('registration.view')
   const sp = await searchParams
   const filters = parseFilters(sp)
   const page = Math.max(1, Number(sp.page) || 1)
@@ -39,9 +42,11 @@ export default async function RegistrationsPage({ searchParams }: { searchParams
         description={`${total} data${hasFilter ? ' sesuai filter' : ''}`}
         actions={
           <>
-            <a href={`/api/admin/export${qs({})}`} className={btnSecondary}>
-              <Download className="size-4" /> Ekspor CSV
-            </a>
+            {can(admin.role, 'export') && (
+              <a href={`/api/admin/export${qs({})}`} className={btnSecondary}>
+                <Download className="size-4" /> Ekspor CSV
+              </a>
+            )}
             <Link href="/admin/pendaftaran/baru" className={btnPrimary}>
               <Plus className="size-4" /> Tambah manual
             </Link>

@@ -2,6 +2,8 @@ import { ArrowRight, CalendarDays, Clock, Users, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { Card, EmptyState, PageHeader, StatusBadge } from '@/components/admin/ui'
 import { getDashboardStats } from '@/lib/admin-queries'
+import { requireAdmin } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { REGISTRATION_STATUSES } from '@/lib/db/schema'
 import { formatDate, formatDateTime, formatRupiah } from '@/lib/format'
 import { PROGRAM_LABELS, STATUS_LABELS } from '@/lib/labels'
@@ -9,20 +11,26 @@ import { PROGRAM_LABELS, STATUS_LABELS } from '@/lib/labels'
 export const metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {
+  const admin = await requireAdmin()
   const s = await getDashboardStats()
+  const showFinance = can(admin.role, 'payment.manage')
 
   const stats = [
     { label: 'Perlu ditindaklanjuti', value: s.fresh, sub: 'Status "Baru"', icon: Clock, href: '/admin/pendaftaran?status=baru', accent: 'text-sky-600 bg-sky-50' },
     { label: 'Pendaftar aktif', value: s.active, sub: `${s.pax} jamaah · ${s.thisMonth} bulan ini`, icon: Users, href: '/admin/pendaftaran', accent: 'text-[#007a82] bg-teal-50' },
-    { label: 'Dana masuk', value: formatRupiah(s.paid), sub: `${formatRupiah(s.paidThisMonth)} bulan ini`, icon: Wallet, accent: 'text-emerald-600 bg-emerald-50' },
-    { label: 'Piutang', value: formatRupiah(s.outstanding), sub: 'Sisa tagihan pendaftar aktif', icon: Wallet, accent: 'text-amber-600 bg-amber-50' },
-  ]
+    ...(showFinance
+      ? [
+          { label: 'Dana masuk', value: formatRupiah(s.paid), sub: `${formatRupiah(s.paidThisMonth)} bulan ini`, icon: Wallet, accent: 'text-emerald-600 bg-emerald-50' },
+          { label: 'Piutang', value: formatRupiah(s.outstanding), sub: 'Sisa tagihan pendaftar aktif', icon: Wallet, accent: 'text-amber-600 bg-amber-50' },
+        ]
+      : []),
+  ] as { label: string; value: string | number; sub: string; icon: typeof Clock; href?: string; accent: string }[]
 
   return (
     <>
       <PageHeader title="Dashboard" description="Ringkasan pendaftaran, pembayaran, dan kuota paket." />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className={`grid gap-4 sm:grid-cols-2 ${showFinance ? 'xl:grid-cols-4' : ''}`}>
         {stats.map(({ label, value, sub, icon: Icon, href, accent }) => {
           const body = (
             <div className="flex h-full items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300">

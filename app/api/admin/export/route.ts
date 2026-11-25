@@ -1,4 +1,6 @@
+import { audit } from '@/lib/audit'
 import { getCurrentAdmin } from '@/lib/auth'
+import { can } from '@/lib/permissions'
 import { exportRegistrations, parseFilters } from '@/lib/admin-queries'
 import { displayPhone, formatDateTimeIso, todayIso } from '@/lib/format'
 import { PROGRAM_LABELS, STATUS_LABELS } from '@/lib/labels'
@@ -13,13 +15,14 @@ function csvCell(value: unknown) {
 }
 
 export async function GET(request: Request) {
-  if (!(await getCurrentAdmin())) {
-    return new Response('Unauthorized', { status: 401 })
-  }
+  const admin = await getCurrentAdmin()
+  if (!admin) return new Response('Unauthorized', { status: 401 })
+  if (!can(admin.role, 'export')) return new Response('Forbidden', { status: 403 })
 
   const url = new URL(request.url)
   const filters = parseFilters(Object.fromEntries(url.searchParams))
   const rows = await exportRegistrations(filters)
+  await audit(admin, 'export.csv', { type: 'registration' }, `${rows.length} baris · filter ${url.searchParams.toString() || '-'}`)
 
   const header = [
     'Kode', 'Tanggal Daftar', 'Nama', 'WhatsApp', 'Email', 'Kota', 'Program', 'Paket', 'Jumlah Jamaah',

@@ -5,7 +5,17 @@ import { displayPhone } from '@/lib/format'
 import { PROGRAM_LABELS, STATUS_LABELS } from '@/lib/labels'
 
 /** Field form pendaftaran untuk tambah & edit di panel admin. */
-export default function RegistrationFields({ reg, packages }: { reg?: Registration; packages: Pick<Package, 'id' | 'name' | 'isActive'>[] }) {
+export default function RegistrationFields({
+  reg,
+  packages,
+  canEditPrice = true,
+  showStatus = true,
+}: {
+  reg?: Registration
+  packages: Pick<Package, 'id' | 'name' | 'isActive'>[]
+  canEditPrice?: boolean
+  showStatus?: boolean
+}) {
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -42,15 +52,21 @@ export default function RegistrationFields({ reg, packages }: { reg?: Registrati
         <FormField label="Jumlah jamaah" name="pax">
           <input id="pax" name="pax" type="number" min={1} max={50} defaultValue={reg?.pax ?? 1} className={inputCls} />
         </FormField>
-        <FormField label="Total tagihan (Rp)" name="totalPriceIdr" hint={reg ? undefined : 'Kosongkan untuk hitung otomatis: harga paket × jumlah jamaah'}>
+        <FormField
+          label="Total tagihan (Rp)"
+          name="totalPriceIdr"
+          hint={!canEditPrice ? 'Hanya Admin/Pemilik yang dapat mengubah tagihan' : reg ? undefined : 'Kosongkan untuk hitung otomatis: harga paket × jumlah jamaah'}
+        >
           <input
             id="totalPriceIdr"
             name="totalPriceIdr"
             inputMode="numeric"
             defaultValue={reg?.totalPriceIdr ? reg.totalPriceIdr.toLocaleString('id-ID') : ''}
-            className={inputCls}
+            readOnly={!canEditPrice}
+            className={inputCls + (canEditPrice ? '' : ' bg-slate-50 text-slate-500')}
           />
         </FormField>
+        {showStatus && (
         <FormField label="Status" name="status">
           <select id="status" name="status" defaultValue={reg?.status ?? 'baru'} className={inputCls}>
             {REGISTRATION_STATUSES.map((s) => (
@@ -58,6 +74,7 @@ export default function RegistrationFields({ reg, packages }: { reg?: Registrati
             ))}
           </select>
         </FormField>
+        )}
         <div className="flex items-end pb-2">
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" name="hasPassport" defaultChecked={reg?.hasPassport} className="size-4 accent-[#007a82]" />

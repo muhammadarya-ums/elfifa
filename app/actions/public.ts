@@ -27,6 +27,7 @@ const registrationSchema = z.object({
   pax: z.coerce.number().int().min(1, 'Minimal 1 orang').max(20, 'Maksimal 20 orang per pendaftaran'),
   hasPassport: z.enum(['ya', 'tidak']).default('tidak'),
   message: z.string().trim().max(1000).default(''),
+  consent: z.literal('on', { error: 'Anda perlu menyetujui kebijakan privasi' }),
 })
 
 export type RegistrationState =
@@ -55,7 +56,7 @@ export async function submitRegistration(_prev: RegistrationState, formData: For
   }
 
   const ip = await clientIp()
-  if (!rateLimit(`reg:${ip}`, 5, 10 * 60 * 1000)) {
+  if (!(await rateLimit(`reg:${ip}`, 5, 10 * 60 * 1000)).allowed) {
     return { status: 'error', message: 'Terlalu banyak percobaan. Silakan coba lagi beberapa menit lagi atau hubungi kami via WhatsApp.' }
   }
 
@@ -69,6 +70,7 @@ export async function submitRegistration(_prev: RegistrationState, formData: For
     pax: str(formData, 'pax') ?? '1',
     hasPassport: str(formData, 'hasPassport') ?? 'tidak',
     message: str(formData, 'message') ?? '',
+    consent: str(formData, 'consent'),
   })
 
   if (!parsed.success) {
@@ -121,6 +123,7 @@ export async function submitRegistration(_prev: RegistrationState, formData: For
         hasPassport: data.hasPassport === 'ya',
         message: data.message,
         totalPriceIdr,
+        consentAt: new Date(),
       })
       break
     } catch (err) {
@@ -169,7 +172,7 @@ export type StatusState =
 
 export async function checkStatus(_prev: StatusState, formData: FormData): Promise<StatusState> {
   const ip = await clientIp()
-  if (!rateLimit(`status:${ip}`, 20, 10 * 60 * 1000)) {
+  if (!(await rateLimit(`status:${ip}`, 20, 10 * 60 * 1000)).allowed) {
     return { status: 'error', message: 'Terlalu banyak percobaan. Silakan coba lagi nanti.' }
   }
 

@@ -16,7 +16,7 @@ import {
 import KbihuMobileNav from '@/components/kbihu-mobile-nav'
 import RegistrationForm from '@/components/registration-form'
 import { FacebookIcon, InstagramIcon, WhatsAppIcon } from '@/components/social-icons'
-import { getSettings, getUpcomingSchedules } from '@/lib/data'
+import { getPublishedFaqs, getSettings, getUpcomingSchedules } from '@/lib/data'
 import { formatDate, waLink } from '@/lib/format'
 import { MAIN_URL } from '@/lib/site-config'
 
@@ -70,7 +70,7 @@ function SectionHeading({ eyebrow, children }: { eyebrow: string; children: Reac
 }
 
 export default async function KbihuPage() {
-  const [settings, upcoming] = await Promise.all([getSettings(), getUpcomingSchedules(6)])
+  const [settings, upcoming, faqs] = await Promise.all([getSettings(), getUpcomingSchedules(6), getPublishedFaqs(['kbihu', 'umum'])])
   const year = new Date().getFullYear()
   const KBIHU_WA_URL = waLink(
     settings.kbihu_whatsapp,
@@ -164,9 +164,11 @@ export default async function KbihuPage() {
                 <span className="flex items-center gap-2">
                   <ShieldCheck size={17} className="text-[#007a82]" /> Terdaftar Kemenag
                 </span>
-                <span className="flex items-center gap-2">
-                  <Users size={17} className="text-[#007a82]" /> 12 tahun membimbing
-                </span>
+                {settings.kbihu_years && (
+                  <span className="flex items-center gap-2">
+                    <Users size={17} className="text-[#007a82]" /> {settings.kbihu_years} tahun membimbing
+                  </span>
+                )}
               </div>
             </div>
 
@@ -317,6 +319,24 @@ export default async function KbihuPage() {
             ))}
           </div>
         </section>
+
+        {/* ==================== FAQ ==================== */}
+        {faqs.length > 0 && (
+          <section id="faq" className="mx-auto max-w-4xl px-5 pb-24 sm:px-8 lg:px-10">
+            <SectionHeading eyebrow="Tanya jawab">Pertanyaan yang sering diajukan</SectionHeading>
+            <div className="mt-10 divide-y divide-[#e1ebe8] border-y border-[#e1ebe8]">
+              {faqs.map((f) => (
+                <details key={f.id} className="group [&_summary::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-6 py-5">
+                    <span className="font-serif text-[19px] leading-snug text-[#1c4849]">{f.question}</span>
+                    <ChevronRight size={18} className="mt-1 shrink-0 text-[#007a82] transition-transform group-open:rotate-90" />
+                  </summary>
+                  <p className="pb-6 pr-10 text-[14.5px] leading-7 text-[#5d7779]">{f.answer}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ==================== PENDAFTARAN ==================== */}
         <section id="daftar" className="mx-5 mb-20 overflow-hidden rounded-[28px] bg-[#0d7378] sm:mx-8 lg:mx-auto lg:max-w-7xl">

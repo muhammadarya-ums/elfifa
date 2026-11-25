@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
+import { headers } from 'next/headers'
 import { MAIN_URL, travel } from '@/lib/site-config'
 import './globals.css'
 
@@ -13,6 +14,7 @@ const sans = Plus_Jakarta_Sans({
 const serif = Fraunces({
   subsets: ['latin'],
   style: ['normal', 'italic'],
+  axes: ['opsz'],
   variable: '--font-fraunces',
   display: 'swap',
 })
@@ -47,16 +49,19 @@ export const viewport: Viewport = {
   themeColor: '#007a82',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // Membaca header membuat setiap halaman (termasuk 404) dirender per request,
+  // sehingga Next.js dapat menyisipkan nonce CSP dari proxy.ts ke semua skrip.
+  await headers()
   return (
     <html lang="id" className={`${sans.variable} ${serif.variable}`}>
-      <body className="font-sans antialiased">
+      <body className="bg-sand-50 font-sans text-ink antialiased">
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        {process.env.VERCEL && <Analytics />}
       </body>
     </html>
   )

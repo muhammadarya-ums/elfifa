@@ -4,6 +4,90 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* =====================================================================
+   ELFIFA BRAND TOKENS
+   Warna diturunkan dari logo: teal (brand) & emas (gold), netral hangat (sand).
+   ===================================================================== */
+@theme {
+  --color-brand-50: #effaf9;
+  --color-brand-100: #d5efed;
+  --color-brand-200: #aedfdc;
+  --color-brand-300: #79c6c3;
+  --color-brand-400: #3fa4a4;
+  --color-brand-500: #128a8d;
+  --color-brand-600: #007a82;
+  --color-brand-700: #00626a;
+  --color-brand-800: #064f56;
+  --color-brand-900: #0a3f45;
+  --color-brand-950: #062a2f;
+
+  --color-gold-50: #fcf7ef;
+  --color-gold-100: #f7ead6;
+  --color-gold-200: #efd3ab;
+  --color-gold-300: #e5b678;
+  --color-gold-400: #dd9f4f;
+  --color-gold-500: #d9923b;
+  --color-gold-600: #b9752a;
+  --color-gold-700: #955a24;
+  --color-gold-800: #7a4923;
+
+  --color-sand-50: #fbf9f5;
+  --color-sand-100: #f5f1e9;
+  --color-sand-200: #ebe4d6;
+  --color-sand-300: #dacfbb;
+  --color-sand-400: #b9ab92;
+
+  --color-ink: #10282b;
+  --color-ink-soft: #3d5457;
+  --color-ink-muted: #6b7f81;
+
+  --radius-arch: 999px 999px 1.5rem 1.5rem;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-rise: rise 0.8s var(--ease-out-soft) both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* Bingkai lengkung khas (motif mihrab) */
+@utility arch {
+  border-radius: 999px 999px 1.5rem 1.5rem;
+}
+@utility arch-sm {
+  border-radius: 999px 999px 1rem 1rem;
+}
+
+/* Teks display: Fraunces dengan optical sizing */
+@utility font-display {
+  font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.025em;
+}
+
+/* Garis tipis dekoratif dengan ornamen titik */
+@utility rule-ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  &::before,
+  &::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: currentColor;
+    opacity: 0.25;
+  }
+}
+
 @theme inline {
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
@@ -124,11 +208,21 @@
   }
   html {
     scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
     /* Supaya judul section tidak tertutup navbar sticky saat klik anchor */
     scroll-padding-top: 6rem;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-gold-200);
+    color: var(--color-ink);
   }
 }
 

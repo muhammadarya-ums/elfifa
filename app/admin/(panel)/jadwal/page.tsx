@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { deleteSchedule, saveSchedule } from '@/app/actions/admin'
 import { ActionForm, ConfirmButton } from '@/components/admin/forms'
 import { Card, EmptyState, Notice, PageHeader } from '@/components/admin/ui'
+import { requireAdmin } from '@/lib/auth'
 import { getDb, schema } from '@/lib/db'
 import { formatDate, todayIso } from '@/lib/format'
 import ScheduleFields from './schedule-fields'
@@ -11,6 +12,7 @@ import ScheduleFields from './schedule-fields'
 export const metadata = { title: 'Jadwal Manasik' }
 
 export default async function SchedulesPage({ searchParams }: { searchParams: Promise<{ disimpan?: string }> }) {
+  await requireAdmin('catalog.manage')
   const sp = await searchParams
   const db = await getDb()
   const rows = await db.select().from(schema.schedules).orderBy(desc(schema.schedules.date))
